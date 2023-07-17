@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Shooter</title>
+    <style>
+        *
+		{
+			margin:0;
+			padding:0;
+			box-sizing:border-box;
+		}
+		body
+		{
+			display:flex;
+			justify-content:center;
+			align-items:center;
+			height: 100%;
+			width: 100%;
+			position: absolute;
+			background:#26ac4a;
+			overflow: hidden;
+            z-index: 0;
+		}
+        .bub
+        {
+            position: absolute;
+            height: 50px;
+            width: 50px;
+            background-color: rgb(203, 204, 200);
+            border-radius: 50%;
+            z-index: 30;
+        }
+        .bub::before
+        {
+            content: '';
+            position: absolute;
+            height: 10px;
+            width: 10px;
+            left: 20%;
+            top: 20%;
+            background-color: aliceblue;
+            border-radius: 50%;
+            z-index: 30;
+        }
+        .violet
+        {
+            background-color: rebeccapurple;
+        }
+        .blue
+        {
+            background-color: rgb(52, 74, 238);
+        }
+        .yellow
+        {
+            background-color: rgb(220, 227, 27);
+        }
+        .red
+        {
+            background-color: rgb(242, 45, 45);
+        }
+        .pink
+        {
+            background-color: rgb(242, 45, 206);
+        }
+        .white
+        {
+            background-color: rgb(203, 204, 200);
+        }
+        #playGrd, #bubGrp, #lineGrp
+        {
+            position: absolute;
+            height: calc(100% - 20px);
+            width: calc(100% - 20px);
+            left: calc(50% - 10px);
+            top: calc(50% - 10px);
+            transform: translate(-50%, -50%);
+            background-color: #187330;
+            border-radius: 25px;
+            margin: 10px;
+            z-index: 5;
+        }
+        #bubGrp, #lineGrp
+        {
+            z-index: 30;
+            background-color: #00000000;
+        }
+        #canon
+        {
+            position: absolute;
+            background-color: rgb(51, 73, 25);
+            width: 110px;
+            height: 110px;
+            bottom: 10px;
+            border-top-right-radius: 50%;
+            border-top-left-radius: 50%;
+            border-bottom-right-radius: 70px;
+            border-bottom-left-radius: 70px;
+            z-index: 20;
+            transform: rotate(0deg);
+        }
+        #canon::before
+        {
+            content: '';
+            position: absolute;
+            background-color: rgb(103, 92, 30);
+            height: 120px;
+            width: 50px;
+            left: 50%;
+            bottom: 40%;
+            transform: translate(-50%, 20%);
+            border: 15px solid rgba(37, 75, 4, 0.424);
+            border-top-right-radius: 50%;
+            border-top-left-radius: 50%;
+            border-bottom-right-radius: 70px;
+            border-bottom-left-radius: 70px;
+            z-index: 20;
+        }
+        .lineDot
+        {
+            position: absolute;
+            height: 50px;
+            width: 50px;
+            background-color: rgba(203, 204, 200, 0.417);
+            border-radius: 50%;
+            z-index: 30;
+        }
+        .h
+        {
+            border: 2px solid white;
+        }
+        .h2
+        {
+            border: 2px solid rgba(255, 255, 255, 0.449);
+        }
+        .menu
+        {
+            position: absolute;
+            background-color: #26ac4ac4;
+            height: 50%;
+            width: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            border: 5px solid #26ac4a;
+            border-radius: 25px;
+        }
+        .blur
+        {
+            filter: blur(5px);
+        }
+        #pauseBt
+        {
+            position: absolute;
+            background-color: #26ac4a00;
+            height: 50px;
+            width: 50px;
+            left: 10px;
+            top: 10px;
+            z-index: 50;
+            border: 5px solid #0b3a18;
+            border-radius: 10px;
+            font-size: large;
+        }
+        .menuBt
+        {
+            position: absolute;
+            background-color: #26ac4a;
+            height: 80px;
+            width: 150px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            border: 5px solid #187330;
+            border-radius: 25px;
+            font-size: large;
+        }
+        .menuTitle
+        {
+            position: absolute;
+            height: 80px;
+            width: 150px;
+            left: 50%;
+            top: 20px;
+            transform: translate(-50%);
+            z-index: 50;
+            text-align: center;
+            font-size: xx-large;
+        }
+    </style>
+</head>
+<body>
+    <div id="playGrd"></div>
+    <div id="bubGrp"></div>
+    <div id="canon"></div>
+    <div id="lineGrp"></div>
+    <div id="wonMenu" class="menu">
+        <div class="menuTitle">You Won</div>
+        <button onclick="switchPause()" class="menuBt">Play Again</button>
+    </div>
+    <div id="failMenu" class="menu">
+        <div class="menuTitle">You Failed</div>
+        <button onclick="switchPause()" class="menuBt">Play Again</button>
+    </div>
+    <script>
+        playGrd = document.getElementById("playGrd")
+        bubGrp = document.getElementById("bubGrp")
+        canon = document.getElementById("canon")
+        lineGrp = document.getElementById("lineGrp")
+        wonMenu = document.getElementById("wonMenu")
+        failMenu = document.getElementById("failMenu")
+
+        bubbles = []
+        noBub = 50
+        FallingBubs = []
+        shootBub = null
+        shootBubPos = [0, 0]
+        shootBubVelo = [0, 0]
+        shootBubMaxVelo = 10
+        canonAng = 0
+        lineDotsNo = 50
+        lineDotsSet = []
+        lineDotsSpace = 25
+        incluBub = []
+        // incluCrls = ["violet", "blue", "yellow", "red", "pink", "white"]
+
+        div = null
+        x = null
+        y = null
+
+        touchPos = [0, 0]
+        initTouchPos = [0, 0]
+        onHold = false;
+        isInitTouch = false
+        shoot = false
+        won = false
+        pause = false
+
+        prevTime = Date.now()
+        dt = 1
+        
+        function buildBubbles()
+        {
+            for(var i=0; i<noBub; i++)
+            {
+                div = document.createElement('div')
+                bubGrp.appendChild(div)
+                div.classList.add("bub")
+                div.id = `b${i}`
+
+                switch(parseInt(6*Math.random()))
+                {
+                    case 0: div.classList.add("violet"); break;
+                    case 1: div.classList.add("blue"); break;
+                    case 2: div.classList.add("yellow"); break;
+                    case 3: div.classList.add("red"); break;
+                    case 4: div.classList.add("pink"); break;
+                    case 5: div.classList.add("white"); break;
+                    case 6: div.classList.add("white"); break;
+                }
+                
+                bubbles.push(div)
+            }
+        }
+        function arrBub()
+        {
+            playGrdWinWd = parseInt((window.innerWidth-20)/50)
+            for(var i=0; i<noBub; i++)
+            {
+                // if(i<playGrdWinWd)
+                // {
+                //     bubbles[i].style.top = `${0}px`
+                //     bubbles[i].style.left = `${50*i}px`
+                // }else if(i<2*playGrdWinWd-1)
+                // {
+                //     bubbles[i].style.top = `${45}px`
+                //     bubbles[i].style.left = `${25+(50*(i-playGrdWinWd))}px`
+                // }else if(i<3*playGrdWinWd-1)
+                // {
+                //     bubbles[i].style.top = `${90}px`
+                //     bubbles[i].style.left = `${(50*(i-2*playGrdWinWd+1))}px`
+                // }else if(i<4*playGrdWinWd-2)
+                // {
+                //     bubbles[i].style.top = `${135}px`
+                //     bubbles[i].style.left = `${25+(50*(i-3*playGrdWinWd+1))}px`
+                // }
+                if(i<playGrdWinWd)
+                {
+                    bubbles[i].style.top = `${0}px`
+                    bubbles[i].style.left = `${50*i}px`
+                }
+                else if(i<2*playGrdWinWd-1)
+                {
+                    bubbles[i].style.top = `${45}px`
+                    bubbles[i].style.left = `${25+(50*(i-playGrdWinWd))}px`
+                }
+                else if(i<3*playGrdWinWd-1)
+                {
+                    bubbles[i].style.top = `${90}px`
+                    bubbles[i].style.left = `${(50*(i-(2*playGrdWinWd-1)))}px`
+                }
+                else if(i<4*playGrdWinWd-2)
+                {
+                    bubbles[i].style.top = `${135}px`
+                    bubbles[i].style.left = `${25+(50*(i-(3*playGrdWinWd-1)))}px`
+                }
+                else if(i<5*playGrdWinWd-2)
+                {
+                    bubbles[i].style.top = `${180}px`
+                    bubbles[i].style.left = `${(50*(i-(4*playGrdWinWd-2)))}px`
+                }
+            }
+            
+        }
+        function drawLine()
+        {
+            if(onHold)
+            {
+                if(lineDotsSet.length == 0)
+                {
+                    for(var i=0; i<lineDotsNo; i++)
+                    {
+                        div = document.createElement('div')
+                        lineGrp.appendChild(div)
+                        div.classList.add("lineDot")
+                        // div.id = `ld${i}`
+                        lineDotsSet.push(div)
+                    }
+                }
+                for(var i=0; i<lineDotsNo; i++)
+                {
+                    x = window.innerWidth/2-35+(i*lineDotsSpace*Math.cos(canonAng*Math.PI/180))
+                    y = 55-25+(-i*lineDotsSpace*Math.sin(canonAng*Math.PI/180))
+                    if(x<0)
+                    {
+                        x = -x
+                    }
+                    if(x>window.innerWidth-70)
+                    {
+                        x = 2*(window.innerWidth-70)-x
+                    }
+                    lineDotsSet[i].style.left = `${x}px`
+                    lineDotsSet[i].style.bottom = `${y}px`
+                }
+            }
+            else if(lineDotsSet.length != 0)
+            {
+                lineGrp.replaceChildren()
+                lineDotsSet = []
+            }
+        }
+        function sameColorSele(i)
+        {
+            bubbles[i].classList.add("h")
+            for(var j=0; j<bubbles.length; j++)
+            {
+                if(Math.pow(parseInt(bubbles[i].style.left) - parseInt(bubbles[j].style.left), 2) + Math.pow(parseInt(bubbles[i].style.top) - parseInt(bubbles[j].style.top), 2) <= 3025)
+                {
+                    if(bubbles[j].classList.item(1) == bubbles[i].classList.item(1) && !FallingBubs.includes(bubbles[j]))
+                    {
+                        FallingBubs.push(bubbles[j])
+                        // bubbles.splice(j)
+                        sameColorSele(j)
+                    }
+                }
+            }
+        }
+        function touching(i)
+        {
+            bubbles[i].classList.add("h2")
+            incluBub.push(bubbles[i])
+            for(var j=0; j<bubbles.length; j++)
+            {
+                if(Math.pow(parseInt(bubbles[i].style.left) - parseInt(bubbles[j].style.left), 2) + Math.pow(parseInt(bubbles[i].style.top) - parseInt(bubbles[j].style.top), 2) <= 3025 && !incluBub.includes(bubbles[j]))
+                {
+                    touching(j)
+                }
+            }
+        }
+        function findIncluBub()
+        {
+            // To find the included bubbles, that is the bubbles attached to the ceiling and not floating in air
+            for(var i=0; i<bubbles.length; i++)
+            {
+                bubbles[i].classList.remove("h2")
+            }
+            incluBub = []
+            for(var i=0; i<bubbles.length; i++)
+            {
+                if(parseInt(bubbles[i].style.top) <= 0 && !incluBub.includes(bubbles[i]))
+                {
+                    touching(i)
+                }
+            }
+        }
+        function initShoot()
+        {
+            div = document.createElement('div')
+            bubGrp.appendChild(div)
+            div.classList.add("bub")
+            div.id = `sb`
+            shootBub = div
+            shootBubPos[0] = window.innerWidth/2-35
+            shootBubPos[1] = window.innerHeight - 100
+            if(incluBub.length > 0)
+            {
+                shootBub.classList.add(incluBub[parseInt(Math.random()*incluBub.length)].classList.item(1))
+            }
+        }
+        function switchPause()
+        {
+            if(pause)
+            {
+                pause = false
+            }else{
+                pause = true
+            }
+        }
+        function reset()
+        {
+            bubbles = []
+            FallingBubs = []
+            shootBub = null
+            shootBubPos = [0, 0]
+            shootBubVelo = [0, 0]
+            lineDotsNo = 50
+            lineDotsSet = []
+            lineDotsSpace = 25
+            incluBub = []
+
+            div = null
+            x = null
+            y = null
+
+            shoot = false
+            won = false
+            pause = true
+            
+            bubGrp.replaceChildren()
+            buildBubbles()
+            arrBub()
+            findIncluBub()
+            initShoot()
+            update()
+        }
+        function update()
+        {
+            console.log(touchPos)
+            
+            //Delta Time
+            dt = (Date.now()-prevTime)/19
+            prevTime = Date.now()
+            if(!pause)
+            {
+                wonMenu.style.scale = 0
+                failMenu.style.scale = 0
+                // CANON ----------------------------------------------------------------------------
+                // Canon Angle calculation from pointer or touch
+                canonAng = Math.atan((touchPos[1]-55)/(touchPos[0]-window.innerWidth/2))*-180/Math.PI
+                if(touchPos[0] < window.innerWidth/2)
+                {
+                    canonAng -= 180
+                }
+                // Canon's transformation
+                canon.style.transform = `rotate(${canonAng+90}deg)`;
+
+
+                // Ball's path
+                drawLine()
+
+
+                // BALL -----------------------------------------------------------------------------
+                // Ball shoot triggerer on release
+                if(onHold)
+                {
+                    shoot = true
+                }
+                else
+                {
+                    if(shoot)
+                    {
+                        shootBubVelo[0] = shootBubMaxVelo*Math.cos(canonAng*Math.PI/180)
+                        shootBubVelo[1] = shootBubMaxVelo*Math.sin(canonAng*Math.PI/180)
+                    }
+                    shoot = false
+                }
+                // Ball boundary deflection
+                if(window.innerWidth-70<shootBubPos[0] || shootBubPos[0]<0)
+                {
+                    shootBubVelo[0] *= -1
+                }
+                // Ball's transformation
+                shootBubPos[0] += shootBubVelo[0] * dt
+                shootBubPos[1] += shootBubVelo[1] * dt
+                shootBub.style.left = `${shootBubPos[0]}px`
+                shootBub.style.top = `${shootBubPos[1]}px`
+
+
+                // Ball's collition with other balls
+                for(var i=0; i<bubbles.length; i++)
+                {
+                    if(Math.pow(parseInt(bubbles[i].style.left) - parseInt(shootBub.style.left), 2) + Math.pow(parseInt(bubbles[i].style.top) - parseInt(shootBub.style.top), 2) <= 3025 && (parseInt(shootBub.style.left) != window.innerWidth/2-35 || parseInt(shootBub.style.top) != window.innerHeight - 100) && !FallingBubs.includes(bubbles[i]))
+                    {
+                        console.log("coll")
+                        bubbles[i].classList.add("h")
+                        // Checking collition with same colour thrice
+                        if(shootBub.classList.item(1) == bubbles[i].classList.item(1))
+                        {
+                            for(var j=0; j<bubbles.length; j++)
+                            {
+                                if(Math.pow(parseInt(bubbles[i].style.left) - parseInt(bubbles[j].style.left), 2) + Math.pow(parseInt(bubbles[i].style.top) - parseInt(bubbles[j].style.top), 2) <= 3600)
+                                {
+                                    if(bubbles[j].classList.item(1) == bubbles[i].classList.item(1) && i!=j && !FallingBubs.includes(bubbles[j]))
+                                    {
+                                        FallingBubs.push(shootBub)
+                                        FallingBubs.push(bubbles[i])
+                                        FallingBubs.push(bubbles[j])
+                                        // incluBub.remove(shootBub)
+                                        // incluBub.remove(bubbles[i])
+                                        // incluBub.remove(bubbles[j])
+                                        bubbles[i].classList.add("h")
+                                        bubbles[j].classList.add("h")
+                                        // bubbles.splice(i)
+                                        // bubbles.splice(j)
+                                        sameColorSele(j)
+                                    }
+                                }
+                            }
+                        }
+                        // Adding shoot bubble to group and reseting another shoot ball
+                        shootBubVelo = [0, 0]
+                        bubbles.push(shootBub)
+                        initShoot()
+                    }
+                }
+                findIncluBub()
+                for(var i=0; i<bubbles.length; i++)
+                {
+                    // To make the unattached bubbles fall
+                    if(!incluBub.includes(bubbles[i]) && !FallingBubs.includes(bubbles[i]))
+                    {
+                        FallingBubs.push(bubbles[i])
+                    }
+                }
+                // Making bubble with same color fall down
+                for(var i=0; i<FallingBubs.length; i++)
+                {
+                    if(parseInt(FallingBubs[i].style.top) < window.innerHeight)
+                    {
+                        FallingBubs[i].style.top = `${parseInt(FallingBubs[i].style.top)+10*dt}px`
+                    }
+                }
+                // To stop the shoot bubble, if it reaches the end
+                if(parseInt(shootBub.style.top) <= 0)
+                {
+                    shootBubVelo = [0, 0]
+                    bubbles.push(shootBub)
+                    initShoot()
+                }
+                // To check for victory
+                if(incluBub.length == 0)
+                {
+                    console.log("Won")
+                    wonMenu.style.scale = 1
+                    reset()
+                }
+
+                // Checking failer
+                for(var i=0; i<bubbles.length; i++)
+                {
+                    if(parseInt(bubbles[i].style.top) > window.innerHeight - 200 && !FallingBubs.includes(bubbles[i]))
+                    {
+                        console.log("Failed")
+                        failMenu.style.scale = 1
+                        reset()
+                    }
+                }
+            }
+
+            setTimeout(update, 1000/60);
+        }
+
+        buildBubbles()
+        arrBub()
+        findIncluBub()
+        initShoot()
+        update()
+
+        window.addEventListener('mousedown', (event) => 
+        {
+            // if(x>50 || y<window.innerHeight-60)
+            // {
+            //     onHold = true;
+            // }
+            onHold = true;
+        });
+        window.addEventListener('mousemove', (event) => 
+        {
+            var e = event;
+            if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave')
+            {
+                x = e.clientX;
+                y = e.clientY;
+            }
+            y = window.innerHeight - y
+            //console.log(x,y)
+            touchPos[0] = x;
+            touchPos[1] = y;
+            if(isInitTouch)
+            {
+                initTouchPos = touchPos;
+                isInitTouch = false
+            }
+        });
+        window.addEventListener('mouseup', (event) => 
+        {
+            // if(x>50 || y<window.innerHeight-60)
+            // {
+            //     onHold = false;
+            //     isInitTouch = true;
+            // }
+            onHold = false;
+            isInitTouch = true;
+        });
+
+        window.addEventListener('touchstart', (event) => 
+        {
+            // if(x>50 || y<window.innerHeight-60)
+            // {
+            //     onHold = true;
+            // }
+            onHold = true;
+        });
+        window.addEventListener('touchmove', (event) => 
+        {
+            var e = event;
+            if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel')
+            {
+                var evt = (typeof e.originalEvent === 'undefined') ? e : e.originalEvent;
+                var touch = evt.touches[0] || evt.changedTouches[0];
+                x = touch.pageX;
+                y = touch.pageY;
+            }
+            y = window.innerHeight - y
+            //console.log(x,y)
+            touchPos[0] = x;
+            touchPos[1] = y;
+            if(isInitTouch)
+            {
+                initTouchPos = touchPos;
+                isInitTouch = false
+            }
+        });
+        window.addEventListener('touchend', (event) => 
+        {
+            // if(x>50 || y<window.innerHeight-60)
+            // {
+            //     onHold = false;
+            //     isInitTouch = true;
+            //     touchedPointNo = 0;
+            // }
+            onHold = false;
+            isInitTouch = true;
+            touchedPointNo = 0;
+        });
+
+    </script>
+</body>
+</html>
